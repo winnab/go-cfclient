@@ -23,13 +23,19 @@ type Service struct {
 	c     *Client
 }
 
-func (c *Client) ListServices() ([]Service, error) {
-	var services []Service
+func (c *Client) ListServices(filter Filters) (services []Service, err error) {
 	var serviceResp servicesResponse
-	r := c.newRequest("GET", "/v2/services")
+
+	path := "/v2/services"
+	filterPath := filter.ToParam()
+	if filterPath != "" {
+		path = path + "?" + filterPath
+	}
+	fmt.Println(path)
+	r := c.newRequest("GET", path)
 	resp, err := c.doRequest(r)
 	if err != nil {
-		return nil, fmt.Errorf("Error requesting services %v", err)
+		return nil, fmt.Errorf("Error requesting services: %v", err)
 	}
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -38,7 +44,7 @@ func (c *Client) ListServices() ([]Service, error) {
 
 	err = json.Unmarshal(resBody, &serviceResp)
 	if err != nil {
-		return nil, fmt.Errorf("Error unmarshaling services %v", err)
+		return nil, fmt.Errorf("Error unmarshaling services: %v", err)
 	}
 	for _, service := range serviceResp.Resources {
 		service.Entity.Guid = service.Meta.Guid

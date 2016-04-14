@@ -18,7 +18,26 @@ func TestListServices(t *testing.T) {
 		client, err := NewClient(c)
 		So(err, ShouldBeNil)
 
-		services, err := client.ListServices()
+		services, err := client.ListServices(Filters{})
+		So(err, ShouldBeNil)
+
+		So(len(services), ShouldEqual, 2)
+		So(services[0].Guid, ShouldEqual, "a3d76c01-c08a-4505-b06d-8603265682a3")
+		So(services[0].Label, ShouldEqual, "nats")
+	})
+
+	Convey("List Services with filters", t, func() {
+		setup(MockRoute{"GET", "/v2/services?q=active:true", listServicePayload})
+		defer teardown()
+		c := &Config{
+			ApiAddress:   server.URL,
+			LoginAddress: fakeUAAServer.URL,
+			Token:        "foobar",
+		}
+		client, err := NewClient(c)
+		So(err, ShouldBeNil)
+
+		services, err := client.ListServices(Filters{Filter{Filter: "active", Ops: ":", Value: "true"}})
 		So(err, ShouldBeNil)
 
 		So(len(services), ShouldEqual, 2)
